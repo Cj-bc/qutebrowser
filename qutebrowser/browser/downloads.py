@@ -87,14 +87,15 @@ def download_dir():
                 favoriteList.write(f+"\n")
 
             favoriteList.seek(0) # I need to reset pointer so that rofi can read it
-            result: CompletedProcess = subprocess.run(["rofi", "-dmenu"]
-                                                      , stdin=favoriteList
-                                                      , capture_output=True
-                                                      , text=True)
 
-            if result.stdout is not None and result.stdout != '':
-                return os.path.expanduser(result.stdout)
+            if shutil.which("rofi") is not None:
+                result: CompletedProcess = subprocess.run(["rofi", "-dmenu"]
+                                                          , stdin=favoriteList
+                                                          , capture_output=True
+                                                          , text=True)
 
+                if result.stdout is not None and result.stdout != '':
+                    return os.path.expanduser(result.stdout)
     if remember_dir and last_used_directory is not None:
         ddir = last_used_directory
     elif directory is None:
