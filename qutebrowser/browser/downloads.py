@@ -25,6 +25,7 @@ from qutebrowser.config import config
 from qutebrowser.utils import (usertypes, standarddir, utils, message, log,
                                qtutils, objreg)
 from qutebrowser.qt import sip
+import subprocess
 
 
 class ModelRole(enum.IntEnum):
@@ -79,6 +80,20 @@ def download_dir():
     """Get the download directory to use."""
     directory = config.val.downloads.location.directory
     remember_dir = config.val.downloads.location.remember
+
+    if config.val.downloads.location.favorite_paths != []:
+        with tempfile.TemporaryFile(mode="w+") as favoriteList:
+            for f in config.val.downloads.location.favorite_paths:
+                favoriteList.write(f+"\n")
+
+            favoriteList.seek(0) # I need to reset pointer so that rofi can read it
+            result: CompletedProcess = subprocess.run(["rofi", "-dmenu"]
+                                                      , stdin=favoriteList
+                                                      , capture_output=True
+                                                      , text=True)
+
+            if result.stdout is not None and result.stdout != '':
+                return os.path.expanduser(result.stdout)
 
     if remember_dir and last_used_directory is not None:
         ddir = last_used_directory
