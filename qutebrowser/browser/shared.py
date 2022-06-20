@@ -51,7 +51,9 @@ def custom_headers(url):
 
     conf_headers = config.instance.get('content.headers.custom', url=url)
     for header, value in conf_headers.items():
-        headers[header.encode('ascii')] = value.encode('ascii')
+        encoded_header = header.encode('ascii')
+        encoded_value = b"" if value is None else value.encode('ascii')
+        headers[encoded_header] = encoded_value
 
     accept_language = config.instance.get('content.headers.accept_language',
                                           url=url)
@@ -339,7 +341,8 @@ def get_user_stylesheet(searching=False):
             'misc-mathml-darkmode' not in config.val.content.site_specific_quirks.skip):
         # WORKAROUND for MathML-output on Wikipedia being black on black.
         # See https://bugs.chromium.org/p/chromium/issues/detail?id=1126606
-        css += '\nimg.mwe-math-fallback-image-inline { filter: invert(100%); }'
+        css += ('\nimg.mwe-math-fallback-image-inline, '
+                'img.mwe-math-fallback-image-display { filter: invert(100%); }')
 
     return css
 
@@ -402,7 +405,7 @@ class FileSelectionMode(enum.Enum):
 
 
 def choose_file(qb_mode: FileSelectionMode) -> List[str]:
-    """Select file(s)/folder for uploading, using external command defined in config.
+    """Select file(s)/folder for up-/downloading, using an external command.
 
     Args:
         qb_mode: File selection mode
@@ -448,7 +451,7 @@ def _execute_fileselect_command(
     """Execute external command to choose file.
 
     Args:
-        multiple: Should selecting multiple files be allowed.
+        qb_mode: Should selecting multiple files be allowed.
         tmpfilename: Path to the temporary file if used, otherwise None.
 
     Return:

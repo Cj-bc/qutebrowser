@@ -384,8 +384,8 @@ class YamlMigrations(QObject):
 
     changed = pyqtSignal()
 
-    def __init__(self, settings: _SettingsType,
-                 parent: QObject = None) -> None:
+    # Note: settings is Any because it's not validated yet.
+    def __init__(self, settings: Any, parent: QObject = None) -> None:
         super().__init__(parent)
         self._settings = settings
 
@@ -421,6 +421,12 @@ class YamlMigrations(QObject):
             true_value='block',
             false_value='load-insecurely',
             ask_value='ask',
+        )
+        self._migrate_renamed_bool(
+            old_name='content.javascript.can_access_clipboard',
+            new_name='content.javascript.clipboard',
+            true_value='access',
+            false_value='none',
         )
 
         for setting in ['colors.webpage.force_dark_color_scheme',

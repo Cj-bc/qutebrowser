@@ -29,6 +29,7 @@ from qutebrowser.commands import parser, cmdexc
 from qutebrowser.misc import objects, split
 from qutebrowser.utils import log, utils, debug, objreg
 from qutebrowser.completion.models import miscmodels
+from qutebrowser.completion import completionwidget
 if TYPE_CHECKING:
     from qutebrowser.browser import browsertab
 
@@ -39,7 +40,8 @@ class CompletionInfo:
     """Context passed into all completion functions."""
 
     config: config.Config
-    keyconf: config.KeyConfig  # pylint: disable=undefined-variable
+    # pylint: disable-next=used-before-assignment
+    keyconf: config.KeyConfig  # type: ignore[name-defined]
     win_id: int
     cur_tab: 'browsertab.AbstractTab'
 
@@ -74,10 +76,15 @@ class Completer(QObject):
     def __repr__(self):
         return utils.get_repr(self)
 
+    def _completion(self) -> completionwidget.CompletionView:
+        """Convenience method to get the current completion."""
+        completion = self.parent()
+        assert isinstance(completion, completionwidget.CompletionView), completion
+        return completion
+
     def _model(self):
         """Convenience method to get the current completion model."""
-        completion = self.parent()
-        return completion.model()
+        return self._completion().model()
 
     def _get_new_completion(self, before_cursor, under_cursor):
         """Get the completion function based on the current command text.
@@ -158,6 +165,7 @@ class Completer(QObject):
                     # cursor is in a space between two existing words
                     parts.insert(i, '')
                 prefix = [x.strip() for x in parts[:i]]
+                # pylint: disable-next=unnecessary-list-index-lookup
                 center = parts[i].strip()
                 # strip trailing whitespace included as a separate token
                 postfix = [x.strip() for x in parts[i+1:] if not x.isspace()]
@@ -230,7 +238,7 @@ class Completer(QObject):
     @pyqtSlot()
     def _update_completion(self):
         """Check if completions are available and activate them."""
-        completion = self.parent()
+        completion = self._completion()
 
         if self._cmd.prefix() != ':':
             # This is a search or gibberish, so we don't need to complete

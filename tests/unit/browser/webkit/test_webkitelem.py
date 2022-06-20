@@ -195,6 +195,7 @@ class SelectionAndFilterTests:
         ('<p role="menuitem" foo="bar"/>', ['all']),
         ('<p role="menuitemcheckbox" foo="bar"/>', ['all']),
         ('<p role="menuitemradio" foo="bar"/>', ['all']),
+        ('<p role="treeitem" foo="bar"/>', ['all']),
         ('<p role="button" foo="bar"/>', ['all']),
         ('<p role="button" href="bar"/>', ['all', 'url']),
 
@@ -866,8 +867,6 @@ class TestIsEditable:
 
     @pytest.mark.parametrize('setting, tagname, attributes, editable', [
         (True, 'embed', {}, True),
-        (True, 'embed', {}, True),
-        (False, 'applet', {}, False),
         (False, 'applet', {}, False),
         (True, 'object', {'type': 'application/foo'}, True),
         (False, 'object', {'type': 'application/foo'}, False),

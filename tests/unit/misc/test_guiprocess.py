@@ -31,7 +31,7 @@ from qutebrowser.api import cmdutils
 from qutebrowser.qt import sip
 
 
-@pytest.fixture()
+@pytest.fixture
 def proc(qtbot, caplog):
     """A fixture providing a GUIProcess and cleaning it up after the test."""
     p = guiprocess.GUIProcess('testprocess')
@@ -46,7 +46,7 @@ def proc(qtbot, caplog):
             p._proc.waitForFinished()
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_proc(monkeypatch, stubs):
     """A fixture providing a GUIProcess with a mocked QProcess."""
     p = guiprocess.GUIProcess('testprocess')
@@ -319,8 +319,8 @@ def test_start_env(monkeypatch, qtbot, py_proc):
 
 def test_start_detached(fake_proc):
     """Test starting a detached process."""
-    cmd = 'foo'
-    args = ['bar']
+    cmd = sys.executable
+    args = ['--version']
     fake_proc._proc.startDetached.return_value = (True, 0)
     fake_proc.start_detached(cmd, args)
     fake_proc._proc.startDetached.assert_called_with(cmd, args, None)

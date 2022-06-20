@@ -117,8 +117,6 @@ class WebEngineSettings(websettings.AbstractSettings):
             Attr(QWebEngineSettings.JavascriptEnabled),
         'content.javascript.can_open_tabs_automatically':
             Attr(QWebEngineSettings.JavascriptCanOpenWindows),
-        'content.javascript.can_access_clipboard':
-            Attr(QWebEngineSettings.JavascriptCanAccessClipboard),
         'content.plugins':
             Attr(QWebEngineSettings.PluginsEnabled),
         'content.hyperlink_auditing':
@@ -199,26 +197,47 @@ class WebEngineSettings(websettings.AbstractSettings):
         QWebEngineSettings.FantasyFont: QFont.Fantasy,
     }
 
-    def set_unknown_url_scheme_policy(
-            self, policy: Union[str, usertypes.Unset]) -> bool:
-        """Set the UnknownUrlSchemePolicy to use.
+    _JS_CLIPBOARD_SETTINGS = {
+        'none': {
+            QWebEngineSettings.WebAttribute.JavascriptCanAccessClipboard: False,
+            QWebEngineSettings.WebAttribute.JavascriptCanPaste: False,
+        },
+        'access': {
+            QWebEngineSettings.WebAttribute.JavascriptCanAccessClipboard: True,
+            QWebEngineSettings.WebAttribute.JavascriptCanPaste: False,
+        },
+        'access-paste': {
+            QWebEngineSettings.WebAttribute.JavascriptCanAccessClipboard: True,
+            QWebEngineSettings.WebAttribute.JavascriptCanPaste: True,
+        },
+    }
 
-        Return:
-            True if there was a change, False otherwise.
-        """
-        old_value = self._settings.unknownUrlSchemePolicy()
+    def set_unknown_url_scheme_policy(
+            self, policy: Union[str, usertypes.Unset]) -> None:
+        """Set the UnknownUrlSchemePolicy to use."""
         if isinstance(policy, usertypes.Unset):
             self._settings.resetUnknownUrlSchemePolicy()
-            new_value = self._settings.unknownUrlSchemePolicy()
         else:
             new_value = self._UNKNOWN_URL_SCHEME_POLICY[policy]
             self._settings.setUnknownUrlSchemePolicy(new_value)
-        return old_value != new_value
+
+    def _set_js_clipboard(self, value: Union[str, usertypes.Unset]) -> None:
+        attr_access = QWebEngineSettings.WebAttribute.JavascriptCanAccessClipboard
+        attr_paste = QWebEngineSettings.WebAttribute.JavascriptCanPaste
+
+        if isinstance(value, usertypes.Unset):
+            self._settings.resetAttribute(attr_access)
+            self._settings.resetAttribute(attr_paste)
+        else:
+            for attr, attr_val in self._JS_CLIPBOARD_SETTINGS[value].items():
+                self._settings.setAttribute(attr, attr_val)
 
     def _update_setting(self, setting, value):
         if setting == 'content.unknown_url_scheme_policy':
-            return self.set_unknown_url_scheme_policy(value)
-        return super()._update_setting(setting, value)
+            self.set_unknown_url_scheme_policy(value)
+        elif setting == 'content.javascript.clipboard':
+            self._set_js_clipboard(value)
+        super()._update_setting(setting, value)
 
     def init_settings(self):
         super().init_settings()
@@ -332,9 +351,9 @@ class ProfileSetter:
 def _update_settings(option):
     """Update global settings when qwebsettings changed."""
     _global_settings.update_setting(option)
-    default_profile.setter.update_setting(option)
+    default_profile.setter.update_setting(option)  # type: ignore[attr-defined]
     if private_profile:
-        private_profile.setter.update_setting(option)
+        private_profile.setter.update_setting(option)  # type: ignore[attr-defined]
 
 
 def _init_user_agent_str(ua):
@@ -352,8 +371,9 @@ def _init_profile(profile: QWebEngineProfile) -> None:
     This currently only contains the steps which are shared between a private and a
     non-private profile (at the moment, only the default profile).
     """
+    # FIXME:mypy subclass QWebEngineProfile instead?
     profile.setter = ProfileSetter(profile)  # type: ignore[attr-defined]
-    profile.setter.init_profile()
+    profile.setter.init_profile()  # type: ignore[attr-defined]
 
     _qute_scheme_handler.install(profile)
     _req_interceptor.install(profile)

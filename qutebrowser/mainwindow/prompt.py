@@ -467,6 +467,31 @@ class PromptContainer(QWidget):
         utils.set_clipboard(question.url, sel)
         message.info("Yanked to {}: {}".format(target, question.url))
 
+    @cmdutils.register(
+        instance='prompt-container', scope='window',
+        modes=[usertypes.KeyMode.prompt])
+    def prompt_fileselect_external(self):
+        """Choose a location using a configured external picker.
+
+        This spawns the external fileselector configured via
+        `fileselect.folder.command`.
+        """
+        assert self._prompt is not None
+        if not isinstance(self._prompt, FilenamePrompt):
+            raise cmdutils.CommandError(
+                "Can only launch external fileselect for FilenamePrompt, "
+                f"not {self._prompt.__class__.__name__}"
+            )
+        # XXX to avoid current cyclic import
+        from qutebrowser.browser import shared
+        folders = shared.choose_file(shared.FileSelectionMode.folder)
+        if not folders:
+            message.info("No folder chosen.")
+            return
+        # choose_file already checks that this is max one folder
+        assert len(folders) == 1
+        self.prompt_accept(folders[0])
+
 
 class LineEdit(QLineEdit):
 
@@ -536,9 +561,11 @@ class _BasePrompt(QWidget):
             self.KEY_MODE.name)
         labels = []
 
+        has_bindings = False
         for cmd, text in self._allowed_commands():
             bindings = all_bindings.get(cmd, [])
             if bindings:
+                has_bindings = True
                 binding = None
                 preferred = ['<enter>', '<escape>']
                 for pref in preferred:
@@ -547,8 +574,11 @@ class _BasePrompt(QWidget):
                 if binding is None:
                     binding = bindings[0]
                 key_label = QLabel('<b>{}</b>'.format(html.escape(binding)))
-                text_label = QLabel(text)
-                labels.append((key_label, text_label))
+            else:
+                key_label = QLabel(f'<b>unbound</b> (<tt>{html.escape(cmd)}</tt>)')
+
+            text_label = QLabel(text)
+            labels.append((key_label, text_label))
 
         for i, (key_label, text_label) in enumerate(labels):
             self._key_grid.addWidget(key_label, i, 0)
@@ -558,6 +588,14 @@ class _BasePrompt(QWidget):
         self._key_grid.addItem(spacer, 0, 2)
 
         self._vbox.addLayout(self._key_grid)
+
+        if not has_bindings:
+            label = QLabel(
+                "<b>Note:</b> You seem to have unbound all keys for this prompt "
+                f"(<tt>{self.KEY_MODE.name}</tt> key mode)."
+                "<br/>Run <tt>qutebrowser :CMD</tt> with a command from above to "
+                "close this prompt, then fix this in your config.")
+            self._vbox.addWidget(label)
 
     def _check_save_support(self, save):
         if save:
@@ -771,7 +809,7 @@ class FilenamePrompt(_BasePrompt):
 
         selmodel.setCurrentIndex(
             idx,
-            QItemSelectionModel.ClearAndSelect |  # type: ignore[arg-type]
+            QItemSelectionModel.ClearAndSelect |
             QItemSelectionModel.Rows)
         self._insert_path(idx, clicked=False)
 
@@ -795,7 +833,7 @@ class DownloadFilenamePrompt(FilenamePrompt):
     def __init__(self, question, parent=None):
         super().__init__(question, parent)
         self._file_model.setFilter(
-            QDir.AllDirs | QDir.Drives | QDir.NoDot)  # type: ignore[arg-type]
+            QDir.AllDirs | QDir.Drives | QDir.NoDotAndDotDot)
 
     def accept(self, value=None, save=False):
         done = super().accept(value, save)
@@ -818,9 +856,11 @@ class DownloadFilenamePrompt(FilenamePrompt):
         cmds = [
             ('prompt-accept', 'Accept'),
             ('mode-leave', 'Abort'),
+            ('rl-filename-rubout', "Go to parent directory"),
             ('prompt-open-download', "Open download"),
             ('prompt-open-download --pdfjs', "Open download via PDF.js"),
             ('prompt-yank', "Yank URL"),
+            ('prompt-fileselect-external', "Launch external file selector"),
         ]
         return cmds
 

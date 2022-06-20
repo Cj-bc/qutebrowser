@@ -27,7 +27,7 @@ import warnings
 import dataclasses
 
 import pytest
-import _pytest.logging
+import _pytest.logging  # pylint: disable=import-private-name
 from PyQt5 import QtCore
 
 from qutebrowser import qutebrowser
@@ -348,7 +348,7 @@ class TestHideQtWarning:
 
     """Tests for hide_qt_warning/QtWarningFilter."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def qt_logger(self):
         return logging.getLogger('qt-tests')
 

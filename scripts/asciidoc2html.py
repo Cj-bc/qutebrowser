@@ -43,7 +43,10 @@ class AsciiDoc:
 
     """Abstraction of an asciidoc subprocess."""
 
-    FILES = ['faq', 'changelog', 'contributing', 'quickstart', 'userscripts']
+    FILES = [
+        'faq', 'changelog', 'contributing', 'quickstart', 'userscripts',
+        'install', 'stacktrace'
+    ]
 
     def __init__(self,
                  asciidoc: Optional[str],
@@ -196,7 +199,11 @@ class AsciiDoc:
                 continue
             self._build_website_file(item_path.parent, item_path.name)
 
-        copy = {'icons': 'icons', 'doc/img': 'doc/img', 'www/media': 'media/'}
+        copy = {
+            'qutebrowser/icons': 'icons',
+            'doc/img': 'doc/img',
+            'www/media': 'media/',
+        }
 
         for src, dest in copy.items():
             full_src = REPO_ROOT / src
