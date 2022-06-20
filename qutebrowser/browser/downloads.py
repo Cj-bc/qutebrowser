@@ -13,8 +13,10 @@ import functools
 import pathlib
 import tempfile
 import enum
-from typing import Any, IO, Optional, Union
+from typing import Any, IO, Optional, Union, Dict, List
 from collections.abc import MutableSequence
+import subprocess
+import shutil
 
 from qutebrowser.qt.core import (pyqtSlot, pyqtSignal, Qt, QObject, QModelIndex,
                           QTimer, QAbstractListModel, QUrl)
@@ -25,7 +27,6 @@ from qutebrowser.config import config
 from qutebrowser.utils import (usertypes, standarddir, utils, message, log,
                                qtutils, objreg)
 from qutebrowser.qt import sip
-import subprocess
 
 
 class ModelRole(enum.IntEnum):
@@ -95,7 +96,8 @@ def download_dir():
                                                           , text=True)
 
                 if result.stdout is not None and result.stdout != '':
-                    return os.path.expanduser(result.stdout)
+                    return os.path.expanduser(result.stdout[:-1]) # To trim '\n' at end of output
+
     if remember_dir and last_used_directory is not None:
         ddir = last_used_directory
     elif directory is None:
