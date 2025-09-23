@@ -10,3 +10,11 @@ ignore = [
     "qutebrowser/html/doc/img/cheatsheet-*.png",
     "*/__pycache__",
 ]
+
+[project]
+name = "qutebrowser"
+version = "3.0.2-mod"
+description = "qutebrowser fork"
+readme = "README.asciidoc"
+requires-python = ">3.9.0"
+dependencies = []
