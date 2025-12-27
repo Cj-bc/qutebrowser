@@ -17,4 +17,13 @@ version = "3.0.2+uv"
 description = "qutebrowser fork"
 readme = "README.md"
 requires-python = ">3.9.0"
-dependencies = []
+dependencies = [
+    "adblock==0.6.0",
+    "colorama==0.4.6",
+    "jinja2==3.1.6",
+    "markupsafe==3.0.3",
+    "pygments==2.19.2",
+    "pyobjc-core>=11.1 ; sys_platform == 'darwin'",
+    "pyobjc-framework-cocoa>=11.1 ; sys_platform == 'darwin'",
+    "pyyaml==6.0.3",
+]
