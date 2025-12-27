@@ -13,8 +13,8 @@ ignore = [
 
 [project]
 name = "qutebrowser"
-version = "3.0.2-mod"
+version = "3.0.2+uv"
 description = "qutebrowser fork"
-readme = "README.asciidoc"
+readme = "README.md"
 requires-python = ">3.9.0"
 dependencies = []
